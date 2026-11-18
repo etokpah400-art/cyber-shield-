@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aegis-X // 3D Cyber Shield Password Analyzer</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+  
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+  
+  <!-- Three.js CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+  <!-- 3D WebGL Background Viewport -->
+  <div id="canvas-container"></div>
+  
+  <!-- Post-Processing Visual Overlays -->
+  <div class="ambient-glow"></div>
+  <div class="scanline-bar"></div>
+  <div class="crt-overlay"></div>
+
+  <!-- Main Cyber HUD Wrapper -->
+  <div class="hud-wrapper">
+    <!-- Top Bar -->
+    <header class="hud-header">
+      <div class="brand">
+        <span class="cyber-badge">NODE // AEGIS-09</span>
+        <h1 class="glitch-title" data-text="CYBER_SHIELD.SYS">CYBER_SHIELD.SYS</h1>
+      </div>
+      <div class="header-controls">
+        <button id="recenter-btn" class="btn-icon" title="Recalibrate Shield Gimbal">
+          <span class="icon">🎯</span>
+          <span class="btn-label">RECENTER</span>
+        </button>
+        <button id="audio-toggle" class="btn-icon" title="Toggle Audio Synthesizer">
+          <span class="icon">🔊</span>
+          <span class="btn-label">SYNTH: ACTIVE</span>
+        </button>
+        <div class="system-status">
+          <span class="status-dot"></span>
+          <span class="status-text">QUANTUM CORE: SYNCED</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Center Interactive Area -->
+    <main class="hud-main">
+      <!-- Left Panel: Metrics & Stats -->
+      <aside class="panel panel-left">
+        <div class="panel-header">
+          <span class="panel-num">01</span>
+          <h2>TELEMETRY MATRIX</h2>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-label">SHANNON ENTROPY</div>
+          <div class="stat-value" id="entropy-value">0.0 <span class="unit">BITS</span></div>
+          <div class="stat-progress">
+            <div class="progress-bar" id="entropy-bar"></div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-label">OFFLINE CRACK RESISTANCE</div>
+          <div class="stat-value highlight" id="crack-time">INSTANTANEOUS</div>
+          <div class="stat-subtext">H100 GPU CLUSTER (10¹⁰ GUESSES/S)</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-label">SHIELD INTEGRITY PROFILE</div>
+          <div class="status-banner" id="shield-status-text">SHIELD OFFLINE</div>
+          <div class="integrity-gauge">
+            <div class="gauge-fill" id="gauge-fill"></div>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <div class="panel-subtitle">HEURISTIC DIAGNOSTICS</div>
+          <ul class="vuln-list" id="vuln-list">
+            <li class="vuln-item safe">INITIALIZING NEURAL SHIELD...</li>
+          </ul>
+        </div>
+      </aside>
+
+      <!-- Center Shield Tactical Reticle HUD -->
+      <section class="shield-tactical-view">
+        <div class="tactical-reticle">
+          <svg viewBox="0 0 400 400" class="reticle-svg">
+            <circle cx="200" cy="200" r="185" class="reticle-ring outer-ring" />
+            <circle cx="200" cy="200" r="150" class="reticle-ring inner-ring" />
+            <path d="M 200 5 L 200 25 M 200 375 L 200 395 M 5 200 L 25 200 M 375 200 L 395 200" class="reticle-ticks" />
+          </svg>
+        </div>
+        <div class="shield-specs">
+          <span id="spec-rotation">GIMBAL: 0.0°</span>
+          <span id="spec-resonance">RESONANCE: 0%</span>
+          <span id="spec-flux">FLUX: STABLE</span>
+        </div>
+      </section>
+
+      <!-- Right Panel: Password Input & Quantum Forge -->
+      <aside class="panel panel-right">
+        <div class="panel-header">
+          <span class="panel-num">02</span>
+          <h2>DEFENSE INPUT</h2>
+        </div>
+
+        <!-- Input Box -->
+        <div class="input-container">
+          <label for="password-input" class="input-label">INGEST ACCESS KEY</label>
+          <div class="input-box">
+            <input 
+              type="password" 
+              id="password-input" 
+              placeholder="Enter cipher key..." 
+              autocomplete="off" 
+              spellcheck="false"
+            />
+            <button id="toggle-visibility" class="btn-input-action" title="Reveal / Conceal">👁️</button>
+            <button id="copy-password" class="btn-input-action" title="Copy to Buffer">📋</button>
+          </div>
+        </div>
+
+        <!-- Checklist -->
+        <div class="criteria-container">
+          <div class="criteria-item" id="crit-len">
+            <span class="crit-bullet"></span>
+            <span>Length (≥ 12 chars)</span>
+          </div>
+          <div class="criteria-item" id="crit-upper">
+            <span class="crit-bullet"></span>
+            <span>Uppercase (A-Z)</span>
+          </div>
+          <div class="criteria-item" id="crit-lower">
+            <span class="crit-bullet"></span>
+            <span>Lowercase (a-z)</span>
+          </div>
+          <div class="criteria-item" id="crit-num">
+            <span class="crit-bullet"></span>
+            <span>Numeric (0-9)</span>
+          </div>
+          <div class="criteria-item" id="crit-sym">
+            <span class="crit-bullet"></span>
+            <span>Special Glyphs (!@#$)</span>
+          </div>
+        </div>
+
+        <!-- Quantum Generator -->
+        <div class="generator-module">
+          <div class="gen-header">
+            <span>QUANTUM CIPHER FORGE</span>
+            <span id="gen-length-display">20 CH</span>
+          </div>
+          <input type="range" id="gen-length" min="8" max="48" value="20" class="cyber-slider">
+          
+          <div class="gen-toggles">
+            <label class="cyber-checkbox">
+              <input type="checkbox" id="gen-sym-chk" checked>
+              <span class="box"></span> Symbols
+            </label>
+            <label class="cyber-checkbox">
+              <input type="checkbox" id="gen-num-chk" checked>
+              <span class="box"></span> Numbers
+            </label>
+            <label class="cyber-checkbox">
+              <input type="checkbox" id="gen-mixed-chk" checked>
+              <span class="box"></span> Caps
+            </label>
+          </div>
+
+          <button id="generate-btn" class="btn-cyber">
+            <span class="btn-glitch-text">⚡ FORGE QUANTUM SHIELD</span>
+          </button>
+        </div>
+      </aside>
+    </main>
+
+    <!-- Bottom Status / Diagnostics Feed -->
+    <footer class="hud-footer">
+      <div class="terminal-feed" id="terminal-feed">
+        <span class="feed-prefix">&gt; SYSTEM:</span>
+        <span class="feed-body" id="feed-msg">Quantum lattice idling. Input cipher string to energize shield array...</span>
+      </div>
+      <div class="sys-version">VER 4.9.0 // HOLOGRAPHIC-CORE // THREE.JS</div>
+    </footer>
+  </div>
+
+  <!-- Main Application Script -->
+  <script src="app.js"></script>
+</body>
+</html>
